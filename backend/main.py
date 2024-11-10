@@ -106,7 +106,6 @@ def generate_audio_content(summary: str, output_type: str) -> str:
 
 @app.post("/process")
 async def process_website(website: WebsiteContent):
-    temp_path = None
     try:
         logger.info(f"Received request for {website.output_type}")
         logger.info(f"URL: {website.url}")
@@ -116,25 +115,24 @@ async def process_website(website: WebsiteContent):
         summary = process_content_with_llama(website.content)
         print(f"Generated summary: {summary}")
         
-        # Create a temporary file for the audio
+        if website.output_type == "music":
+            # Return audio URL for music
+            audio_url = generate_music(summary, "music.mp3")
+            return {"audio_url": audio_url}
+        
+        # For podcast and EDM, continue with file response
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
         temp_path = temp_file.name
         temp_file.close()
         
-        print(f"Processing {website.output_type} generation...")
         if website.output_type == "podcast":
             generate_audio_summary(summary, temp_path)
         elif website.output_type == "edm":
             generate_edm(summary, temp_path)
-        elif website.output_type == "music":
-            generate_music(summary, temp_path)
-        else:
-            raise HTTPException(status_code=400, detail=f"Unsupported output type: {website.output_type}")
         
         if not os.path.exists(temp_path) or os.path.getsize(temp_path) == 0:
             raise HTTPException(status_code=500, detail=f"Failed to generate {website.output_type} file")
         
-        print(f"Returning {website.output_type} file: {temp_path}")
         return FileResponse(
             temp_path,
             media_type='audio/mpeg',
@@ -145,15 +143,8 @@ async def process_website(website: WebsiteContent):
         )
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
-        logger.error(traceback.format_exc())  # Log the full traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        if temp_path and os.path.exists(temp_path):
-            try:
-                # os.unlink(temp_path)
-                logger.info(f"Cleaned up temporary file: {temp_path}")
-            except Exception as e:
-                logger.error(f"Failed to delete temporary file: {e}")
 
 @app.get("/health")
 async def health_check():
@@ -238,6 +229,7 @@ def generate_music(summary: str, output_file_name: str):
   response.raise_for_status()
   data = response.json()
   print("Clip data:", data)
+  return data["audio_url"]
 
 def generate_audio_summary(summary: str, output_file_name: str):
     print(f"Generating audio summary to: {output_file_name}")

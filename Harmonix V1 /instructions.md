@@ -4,6 +4,8 @@
 # EDM
 2 - Now lets focus on the edm too similar to the podcast, based on website content, EDM will be generated, the endpoint remains the same but need to change the output type
 3 - The next functionality would be the EDM should automatically be generated and played whenever he visits any new page, but user can pause it in the chrome extension
+# MUSIC
+4 - The music feature, will be generated if user clicks generate music, the audio url would be returned in this case from the backend, instead of the audio file and front_end is responsible to play that
 
 
 

@@ -3,9 +3,11 @@ let isProcessing = false;
 document.addEventListener('DOMContentLoaded', function() {
     const generatePodcastBtn = document.getElementById('generatePodcast');
     const generateEDMBtn = document.getElementById('generateEDM');
+    const generateMusicBtn = document.getElementById('generateMusic');
     
     generatePodcastBtn.addEventListener('click', () => handleGeneration('podcast'));
     generateEDMBtn.addEventListener('click', () => handleGeneration('edm'));
+    generateMusicBtn.addEventListener('click', () => handleGeneration('music'));
 
     // Add EDM toggle handler
     const edmToggle = document.getElementById('edmToggle');
@@ -58,7 +60,8 @@ async function handleGeneration(outputType) {
         const response = await fetch(API_ENDPOINTS.LOCAL_API, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': outputType === 'music' ? 'application/json' : 'audio/mpeg'
             },
             body: JSON.stringify({
                 url: tab.url,
@@ -71,8 +74,15 @@ async function handleGeneration(outputType) {
             throw new Error('Failed to process content');
         }
 
-        const audioBlob = await response.blob();
-        await handleGeneratedAudio(audioBlob, outputType);
+        if (outputType === 'music') {
+            // Handle music URL response
+            const data = await response.json();
+            await handleMusicUrl(data.audio_url);
+        } else {
+            // Handle direct audio response for podcast and EDM
+            const audioBlob = await response.blob();
+            await handleGeneratedAudio(audioBlob, outputType);
+        }
         
     } catch (error) {
         console.error('Error:', error);
@@ -80,6 +90,39 @@ async function handleGeneration(outputType) {
     } finally {
         isProcessing = false;
         showLoading(false);
+    }
+}
+
+async function handleMusicUrl(audioUrl) {
+    try {
+        const audioPlayer = document.getElementById('audioPlayer');
+        audioPlayer.src = audioUrl;
+        audioPlayer.style.display = 'block';
+        
+        const downloadBtn = document.getElementById('downloadBtn');
+        downloadBtn.style.display = 'block';
+        downloadBtn.onclick = async () => {
+            try {
+                const response = await fetch(audioUrl);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `harmonix-music-${timestamp}.mp3`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Download error:', error);
+                updateStatus('Failed to download music', true);
+            }
+        };
+        
+        updateStatus('Music generated successfully!');
+    } catch (error) {
+        throw new Error(`Failed to process music: ${error.message}`);
     }
 }
 
