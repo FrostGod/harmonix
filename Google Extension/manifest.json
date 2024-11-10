@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Harmonix",
+  "version": "1.0",
+  "description": "Scrapes text from websites and creates a song",
+  "permissions": [
+    "activeTab",
+    "downloads",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "exclude_matches": [
+      "*://www.google.com/search*",
+      "*://google.com/search*"
+    ],
+    "js": ["content.js"],
+    "run_at": "document_start"
+  }],
+  "web_accessible_resources": [{
+    "resources": ["sample.mp3", "popup.html"],
+    "matches": ["<all_urls>"]
+  }]
+}
