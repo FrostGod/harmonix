@@ -15,6 +15,11 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 from fastapi.middleware.cors import CORSMiddleware
 import traceback
+from solana.rpc.async_api import AsyncClient
+from solana.transaction import Transaction
+import base64
+# from metaplex.metadata import create_metadata_instruction, Data  # Comment out or remove this line
+import json
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -265,6 +270,56 @@ def generate_audio_summary(summary: str, output_file_name: str):
     print(f"Audio file created successfully. Size: {os.path.getsize(output_file_name)} bytes")
     return
 
+# Add these new imports and setup
+solana_client = AsyncClient("https://api.devnet.solana.com")
+
+class NFTRequest(BaseModel):
+    audio_data: str
+    metadata: dict
+
+@app.post("/mint-nft")
+async def mint_nft(request: NFTRequest):
+    try:
+        logger.info("Starting NFT minting process")
+        audio_bytes = base64.b64decode(request.audio_data)
+        
+        audio_url = "https://arweave.net/mock-audio-url"
+        
+        # Create metadata JSON
+        metadata = {
+            "name": request.metadata["name"],
+            "description": request.metadata["description"],
+            "image": "https://arweave.net/mock-image-url",  # Optional image
+            "animation_url": audio_url,  # This is where the audio will be played from
+            "attributes": request.metadata["attributes"],
+            "properties": {
+                "files": [
+                    {
+                        "uri": audio_url,
+                        "type": "audio/mp3"
+                    }
+                ]
+            }
+        }
+        
+        # For now, return mock data
+        # In production, you would:
+        # 1. Upload audio to Arweave/IPFS
+        # 2. Create metadata JSON and upload
+        # 3. Mint NFT using Metaplex
+        # 4. Return the mint address
+        
+        return {
+            "success": True,
+            "mint_address": "mock_mint_address",
+            "metadata_uri": "https://arweave.net/mock-metadata-uri",
+            "transaction_signature": "mock_signature"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error minting NFT: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     try:
