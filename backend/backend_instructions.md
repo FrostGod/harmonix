@@ -14,5 +14,15 @@ C - Podcast Summary: A spoken-word summary of the entire website, which can be a
 3 - After the Backend processing, send it back to the caller, where it is played in the browser itself in the mp3 format
 
 ## Tools used
-LLama index, open AI, appwrite as backend tool
+LLama index, open AI, appwrite as backend tool, fast api
+
+
+## Temp
+Next steps would be:
+Implement actual audio generation integration
+Add error handling and validation
+Set up Appwrite integration for data persistence
+Add authentication and rate limiting
+Implement caching for processed content
+Would you like me to elaborate on any of these components or move forward with implementing any of the next steps?
 
