@@ -7,7 +7,7 @@ export default function Pricing() {
       name: 'Free',
       price: '0',
       features: [
-        'Generate up to 10 tracks per day',
+        'Generate up to 5 audios per day',
         'Basic audio customization',
         'Save to local storage',
         'Standard quality audio',
@@ -15,12 +15,11 @@ export default function Pricing() {
     },
     {
       name: 'Pro',
-      price: '9.99',
+      price: '4.99',
       features: [
-        'Unlimited track generation',
+        'Unlimited audio generation',
         'Advanced audio customization',
         'Spotify integration',
-        'High quality audio',
         'Priority support',
         'Custom themes',
       ],

@@ -31,7 +31,7 @@ export default function HowItWorks() {
         <div className="lg:text-center">
           <h2 className="text-base text-pink-500 font-semibold tracking-wide uppercase">How It Works</h2>
           <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            Simple steps to enhance your browsing
+            Simple steps to upgrade your browsing
           </p>
         </div>
 

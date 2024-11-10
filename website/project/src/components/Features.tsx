@@ -4,34 +4,20 @@ import { Music2, Radio, Headphones, Sparkles, Save, Music4 } from 'lucide-react'
 const features = [
   {
     name: 'Custom Music Generation',
-    description: 'Generate unique music tracks based on website content and mood.',
+    description: 'Generate lyrical songs to memorize website facts.',
     icon: Music2,
   },
   {
     name: 'EDM Tracks',
-    description: 'Transform web content into energetic electronic dance music.',
-    icon: Radio,
-  },
-  {
-    name: 'Podcast Summaries',
-    description: 'Convert articles into concise, engaging audio summaries.',
+    description: 'Immerse yourself in content with tailored electronic dance music.',
     icon: Headphones,
   },
   {
-    name: 'AI-Powered',
-    description: 'Advanced AI algorithms create perfectly matched audio content.',
-    icon: Sparkles,
+    name: 'Podcast Summaries',
+    description: 'Convert text into concise, engaging audio summaries.',
+    icon: Radio,
   },
-  {
-    name: 'Save Favorites',
-    description: 'Store your favorite generated tracks for later listening.',
-    icon: Save,
-  },
-  {
-    name: 'Spotify Integration',
-    description: 'Seamlessly save and sync with your Spotify playlists.',
-    icon: Music4,
-  },
+
 ];
 
 export default function Features() {
@@ -41,7 +27,7 @@ export default function Features() {
         <div className="lg:text-center">
           <h2 className="text-base text-pink-500 font-semibold tracking-wide uppercase">Features</h2>
           <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            Everything you need for an enhanced browsing experience
+            Every audio you need to enhance memorization  
           </p>
         </div>
 
