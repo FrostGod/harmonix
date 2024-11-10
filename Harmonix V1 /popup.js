@@ -6,6 +6,39 @@ document.addEventListener('DOMContentLoaded', function() {
     
     generatePodcastBtn.addEventListener('click', () => handleGeneration('podcast'));
     generateEDMBtn.addEventListener('click', () => handleGeneration('edm'));
+
+    // Add EDM toggle handler
+    const edmToggle = document.getElementById('edmToggle');
+    
+    // Load initial state
+    chrome.storage.local.get('isEDMEnabled', (data) => {
+        edmToggle.checked = data.isEDMEnabled ?? true;
+    });
+
+    edmToggle.addEventListener('change', function() {
+        const enabled = this.checked;
+        chrome.runtime.sendMessage({
+            action: "toggleEDM",
+            enabled: enabled
+        }, (response) => {
+            if (chrome.runtime.lastError) {
+                console.error('Toggle error:', chrome.runtime.lastError);
+                return;
+            }
+            
+            if (enabled) {
+                // If enabling, get the current tab and generate EDM
+                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                    if (tabs[0]) {
+                        chrome.tabs.sendMessage(tabs[0].id, { 
+                            action: "generateEDM",
+                            url: tabs[0].url 
+                        });
+                    }
+                });
+            }
+        });
+    });
 });
 
 async function handleGeneration(outputType) {

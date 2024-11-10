@@ -10,8 +10,15 @@ import uvicorn
 import requests
 from elevenlabs import ElevenLabs
 import tempfile
+import ssl
+from fastapi.middleware.cors import CORSMiddleware
+import logging
+from fastapi.middleware.cors import CORSMiddleware
+import traceback
 
-
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 ### PROMPT SECTION ###
 EDM_GENERATION_PROMPT = """Given this website summary: "{summary}"
@@ -37,6 +44,15 @@ load_dotenv()
 
 # Initialize FastAPI
 app = FastAPI(title="Harmonix Backend")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*", "chrome-extension://*"],  # Allow Chrome extension
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Configure OpenAI
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -80,6 +96,9 @@ def generate_audio_content(summary: str, output_type: str) -> str:
 
     if output_type == "edm":
         generate_edm(summary, "edm.mp3")
+      
+    if output_type == "music":
+        generate_music(summary, "music.mp3")
     
     # For now, we'll just return a mock audio URL
     # In real implementation, this would integrate with audio generation service
@@ -89,6 +108,10 @@ def generate_audio_content(summary: str, output_type: str) -> str:
 async def process_website(website: WebsiteContent):
     temp_path = None
     try:
+        logger.info(f"Received request for {website.output_type}")
+        logger.info(f"URL: {website.url}")
+        logger.info(f"Content length: {len(website.content)}")
+        
         # Process content using LlamaIndex
         summary = process_content_with_llama(website.content)
         print(f"Generated summary: {summary}")
@@ -103,6 +126,8 @@ async def process_website(website: WebsiteContent):
             generate_audio_summary(summary, temp_path)
         elif website.output_type == "edm":
             generate_edm(summary, temp_path)
+        elif website.output_type == "music":
+            generate_music(summary, temp_path)
         else:
             raise HTTPException(status_code=400, detail=f"Unsupported output type: {website.output_type}")
         
@@ -119,20 +144,24 @@ async def process_website(website: WebsiteContent):
             background=None
         )
     except Exception as e:
-        print(f"Error processing request: {str(e)}")
+        logger.error(f"Error processing request: {str(e)}")
+        logger.error(traceback.format_exc())  # Log the full traceback
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if temp_path and os.path.exists(temp_path):
             try:
-                os.unlink(temp_path)
-                print(f"Cleaned up temporary file: {temp_path}")
+                # os.unlink(temp_path)
+                logger.info(f"Cleaned up temporary file: {temp_path}")
             except Exception as e:
-                print(f"Failed to delete temporary file: {e}")
+                logger.error(f"Failed to delete temporary file: {e}")
 
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
 
+@app.get("/test")
+async def test_connection():
+    return {"status": "Backend is running"}
 
 def generate_edm(summary: str, output_file_name: str):
     try:
@@ -154,7 +183,7 @@ def generate_edm(summary: str, output_file_name: str):
         print("Generating EDM sound effects...")
         response = client.text_to_sound_effects.convert(
             text=edm_prompt,
-            duration_seconds=30,  # Increased duration for EDM
+            duration_seconds=10,  # Increased duration for EDM
             prompt_influence=1,
         )
 
@@ -176,6 +205,39 @@ def generate_edm(summary: str, output_file_name: str):
         print(f"Error in generate_edm: {str(e)}")
         print(f"Error type: {type(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate EDM: {str(e)}")
+
+def generate_music(summary: str, output_file_name: str):
+  print("DIVI summary:", summary)
+  response = requests.post(
+      "https://api.aimlapi.com/v2/generate/audio/suno-ai/clip",
+      headers={
+          "Authorization": "Bearer " + os.getenv("AIMLAPI_API_KEY"),
+          "Content-Type": "application/json",
+      },
+      json={
+          "gpt_description_prompt": "A very short story about the website with the following content: " + summary,
+      },
+  )
+  response.raise_for_status()
+  data = response.json()
+  clip_ids = data["clip_ids"]
+  print("Generated clip ids:", clip_ids)
+  # fetch the clip
+  response = requests.get(
+      "https://api.aimlapi.com/v2/generate/audio/suno-ai/clip",
+      params={
+          "clip_id": clip_ids[0],
+          "status": "streaming",
+      },
+      headers={
+          "Authorization": "Bearer " + os.getenv("AIMLAPI_API_KEY"),
+          "Content-Type": "application/json",
+      },
+  )
+
+  response.raise_for_status()
+  data = response.json()
+  print("Clip data:", data)
 
 def generate_audio_summary(summary: str, output_file_name: str):
     print(f"Generating audio summary to: {output_file_name}")
@@ -213,4 +275,22 @@ def generate_audio_summary(summary: str, output_file_name: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    try:
+        logger.info("Starting server with SSL...")
+        ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        ssl_context.load_cert_chain(
+            certfile="localhost.crt",
+            keyfile="localhost.key"
+        )
+        
+        uvicorn.run(
+            app, 
+            host="0.0.0.0", 
+            port=8000,
+            ssl_certfile="localhost.crt",
+            ssl_keyfile="localhost.key",
+            log_level="info"
+        )
+    except Exception as e:
+        logger.error(f"Failed to start server: {str(e)}")
+        logger.error(traceback.format_exc())

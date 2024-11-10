@@ -23,7 +23,7 @@
     "tabs"
   ],
   "host_permissions": [
-    "http://0.0.0.0:8000/*",
+    "https://localhost:8000/*",
     "<all_urls>"
   ],
   "content_scripts": [
@@ -38,5 +38,8 @@
       "resources": ["constants.js"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; font-src 'self' https://fonts.gstatic.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'"
+  }
 }

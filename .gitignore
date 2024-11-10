@@ -2,3 +2,5 @@ backend/test
 backend/.env
 .DS_Store
 backend/.DS_Store
+backend/localhost.crt
+backend/localhost.key
