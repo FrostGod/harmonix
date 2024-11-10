@@ -6,6 +6,7 @@ import openai
 from dotenv import load_dotenv
 import os
 import uvicorn
+import requests
 
 # Load environment variables
 load_dotenv()
@@ -15,7 +16,7 @@ app = FastAPI(title="Harmonix Backend")
 
 # Configure OpenAI
 openai.api_key = os.getenv("OPENAI_API_KEY")
-
+elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
 # Define request models
 class WebsiteContent(BaseModel):
     url: str
@@ -37,7 +38,7 @@ def process_content_with_llama(content: str) -> str:
     
     # Generate a concise summary
     response = query_engine.query(
-        "Generate a concise summary of this content focusing on main themes and mood."
+        "Generate a concise summary of this content focusing of the webpage content"
     )
     
     return str(response)
@@ -49,6 +50,9 @@ def generate_audio_content(summary: str, output_type: str) -> str:
         "music": "Create a custom music track that captures this mood: ",
         "podcast": "Create a podcast script summarizing this content: "
     }
+
+    if output_type == "podcast":
+        generate_audio_summary(summary, "output.mp3")
     
     # For now, we'll just return a mock audio URL
     # In real implementation, this would integrate with audio generation service
@@ -62,20 +66,12 @@ async def process_website(website: WebsiteContent):
         
         print("DEBUG ", summary)
 
-        return ProcessedResponse(
-            summary=summary,
-            audio_url="None"
-        )
-
-        # TODO: Add appwrite integration here, to store the summary
-        # and next steps would be to generate audio content based on the summary
-
         # Step 2: Generate audio content based on the summary
         audio_url = generate_audio_content(summary, website.output_type)
         
         return ProcessedResponse(
             summary=summary,
-            audio_url=audio_url
+            audio_url="None"
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -84,6 +80,33 @@ async def process_website(website: WebsiteContent):
 async def health_check():
     return {"status": "healthy"}
 
+
+def generate_audio_summary(summary: str, output_file_name: str):
+  print(output_file_name)
+  CHUNK_SIZE = 1024
+  url = "https://api.elevenlabs.io/v1/text-to-speech/9BWtsMINqrJLrRacOk9x"
+
+  headers = {
+    "Accept": "audio/mpeg",
+    "Content-Type": "application/json",
+    "xi-api-key": elevenlabs_api_key
+  }
+
+  data = {
+    "text": summary,
+    "model_id": "eleven_monolingual_v1",
+    "voice_settings": {
+      "stability": 0.5,
+      "similarity_boost": 0.5
+    }
+  }
+
+  response = requests.post(url, json=data, headers=headers)
+  print(response)
+  with open(output_file_name, 'wb') as f:
+      for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+          if chunk:
+              f.write(chunk)
 
 
 if __name__ == "__main__":

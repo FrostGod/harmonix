@@ -14,7 +14,7 @@ C - Podcast Summary: A spoken-word summary of the entire website, which can be a
 3 - After the Backend processing, send it back to the caller, where it is played in the browser itself in the mp3 format
 
 ## Tools used
-LLama index, open AI, appwrite as backend tool, fast api
+LLama index, open AI, appwrite as backend tool, fast api, tweleve labs
 
 
 ## Temp
