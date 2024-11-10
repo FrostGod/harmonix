@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional, Literal
 from llama_index.core import Document, VectorStoreIndex
@@ -8,6 +9,7 @@ import os
 import uvicorn
 import requests
 from elevenlabs import ElevenLabs
+import tempfile
 
 
 
@@ -24,10 +26,9 @@ Generate an EDM music prompt by:
    - Any specific production techniques
 
 Make the prompt engaging and specific to the user's likely needs based on the website context.
-and the only output should be the prompt, nothing else.
+Output only the prompt, nothing else.
 
 Example format:
-For a Wikipedia article about neuroscience:
 "Create a focused ambient EDM track at 85 BPM with soft piano melodies and gentle sidechained pads. Layer in subtle binaural beats and low-fi textures to enhance concentration. Maintain a consistent, hypnotic groove with minimal variations to support deep learning."
 """
 
@@ -84,23 +85,49 @@ def generate_audio_content(summary: str, output_type: str) -> str:
     # In real implementation, this would integrate with audio generation service
     return f"https://api.harmonix.com/audio/{output_type}/{hash(summary)}.mp3"
 
-@app.post("/process", response_model=ProcessedResponse)
+@app.post("/process")
 async def process_website(website: WebsiteContent):
+    temp_path = None
     try:
-        # Step 1: Process content using LlamaIndex
+        # Process content using LlamaIndex
         summary = process_content_with_llama(website.content)
+        print(f"Generated summary: {summary}")
         
-        print("DEBUG ", summary)
-
-        # Step 2: Generate audio content based on the summary
-        audio_url = generate_audio_content(summary, website.output_type)
+        # Create a temporary file for the audio
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
+        temp_path = temp_file.name
+        temp_file.close()
         
-        return ProcessedResponse(
-            summary=summary,
-            audio_url="None"
+        print(f"Processing {website.output_type} generation...")
+        if website.output_type == "podcast":
+            generate_audio_summary(summary, temp_path)
+        elif website.output_type == "edm":
+            generate_edm(summary, temp_path)
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported output type: {website.output_type}")
+        
+        if not os.path.exists(temp_path) or os.path.getsize(temp_path) == 0:
+            raise HTTPException(status_code=500, detail=f"Failed to generate {website.output_type} file")
+        
+        print(f"Returning {website.output_type} file: {temp_path}")
+        return FileResponse(
+            temp_path,
+            media_type='audio/mpeg',
+            headers={
+                'Content-Disposition': f'attachment; filename="{website.output_type}.mp3"'
+            },
+            background=None
         )
     except Exception as e:
+        print(f"Error processing request: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+                print(f"Cleaned up temporary file: {temp_path}")
+            except Exception as e:
+                print(f"Failed to delete temporary file: {e}")
 
 @app.get("/health")
 async def health_check():
@@ -116,62 +143,73 @@ def generate_edm(summary: str, output_file_name: str):
         # Create a query engine and generate EDM prompt
         query_engine = index.as_query_engine()
         edm_prompt_response = query_engine.query(EDM_GENERATION_PROMPT.format(summary=summary))
-        edm_prompt = str(edm_prompt_response)  # Convert to string explicitly
+        edm_prompt = str(edm_prompt_response)
 
         print("Generated EDM Prompt:", edm_prompt)
-        print("Prompt type:", type(edm_prompt))
 
         client = ElevenLabs(
             api_key=elevenlabs_api_key,
         )
         
-        print("Calling ElevenLabs API with prompt length:", len(edm_prompt))
+        print("Generating EDM sound effects...")
         response = client.text_to_sound_effects.convert(
             text=edm_prompt,
-            duration_seconds=10,
+            duration_seconds=30,  # Increased duration for EDM
             prompt_influence=1,
         )
 
-        # Save the audio response
+        print(f"Writing EDM to file: {output_file_name}")
         with open(output_file_name, "wb") as audio_file:
             for chunk in response:
                 audio_file.write(chunk)
                 
-        print(f"Successfully saved audio to {output_file_name}")
+        print(f"Successfully saved EDM to {output_file_name}")
         
+        # Verify file size
+        file_size = os.path.getsize(output_file_name)
+        print(f"EDM file size: {file_size} bytes")
+        
+        if file_size == 0:
+            raise Exception("Generated EDM file is empty")
+            
     except Exception as e:
         print(f"Error in generate_edm: {str(e)}")
         print(f"Error type: {type(e)}")
-        raise  # Re-raise the exception after logging
+        raise HTTPException(status_code=500, detail=f"Failed to generate EDM: {str(e)}")
 
 def generate_audio_summary(summary: str, output_file_name: str):
-  print(output_file_name)
-  CHUNK_SIZE = 1024
-  url = "https://api.elevenlabs.io/v1/text-to-speech/9BWtsMINqrJLrRacOk9x"
+    print(f"Generating audio summary to: {output_file_name}")
+    CHUNK_SIZE = 1024
+    url = "https://api.elevenlabs.io/v1/text-to-speech/9BWtsMINqrJLrRacOk9x"
 
-  headers = {
-    "Accept": "audio/mpeg",
-    "Content-Type": "application/json",
-    "xi-api-key": elevenlabs_api_key
-  }
-
-  data = {
-    "text": summary,
-    "model_id": "eleven_monolingual_v1",
-    "voice_settings": {
-      "stability": 0.5,
-      "similarity_boost": 0.5
+    headers = {
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": elevenlabs_api_key
     }
-  }
 
-  response = requests.post(url, json=data, headers=headers)
-  print(response)
-  with open(output_file_name, 'wb') as f:
-      for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-          if chunk:
-              f.write(chunk)
-              
-  return
+    data = {
+        "text": summary,
+        "model_id": "eleven_monolingual_v1",
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.5
+        }
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    if not response.ok:
+        print(f"ElevenLabs API error: {response.status_code} - {response.text}")
+        raise HTTPException(status_code=500, detail="Failed to generate audio from ElevenLabs")
+
+    print(f"Writing audio response to file: {output_file_name}")
+    with open(output_file_name, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+            if chunk:
+                f.write(chunk)
+                
+    print(f"Audio file created successfully. Size: {os.path.getsize(output_file_name)} bytes")
+    return
 
 
 if __name__ == "__main__":

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Harmonix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'Geist';
+            src: url('https://vercel.com/static/fonts/geist/Geist-Regular.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Geist';
+            src: url('https://vercel.com/static/fonts/geist/Geist-Medium.woff2') format('woff2');
+            font-weight: 500;
+            font-style: normal;
+        }
+
+        body {
+            width: 300px;
+            padding: 15px;
+            font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: white;
+            color: #111;
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 10px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .header img {
+            width: 32px;
+            height: 32px;
+        }
+
+        h2 {
+            margin: 0;
+            color: #111;
+            font-weight: 600;
+            font-size: 20px;
+        }
+
+        .generate-button {
+            padding: 12px;
+            background: #0070f3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Geist', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .generate-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .generate-button:hover:not(:disabled) {
+            background: #0061d5;
+            transform: translateY(-1px);
+        }
+
+        .loading-container {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+            height: 40px;
+        }
+
+        .loading-container.active {
+            display: flex;
+        }
+
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #eee;
+            border-top: 2px solid #0070f3;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 13px;
+            display: none;
+        }
+
+        #status.error {
+            background: #fff2f2;
+            color: #ff4444;
+        }
+
+        #status.success {
+            background: #f0fff4;
+            color: #4CAF50;
+        }
+
+        #audioPlayer {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 8px;
+            background: #f5f5f5;
+            display: none;
+        }
+
+        #downloadBtn {
+            margin-top: 8px;
+            background: #0070f3;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Geist', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            width: 100%;
+            display: none;
+        }
+
+        #downloadBtn:hover {
+            background: #0061d5;
+            transform: translateY(-1px);
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="images/Harmonix_Logo.png" alt="Harmonix">
+            <h2>Harmonix</h2>
+        </div>
+        
+        <button id="generatePodcast" class="generate-button">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+            </svg>
+            Generate Podcast
+        </button>
+        
+        <button id="generateEDM" class="generate-button">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M9 18V5l12-2v13"/>
+                <circle cx="6" cy="18" r="3"/>
+                <circle cx="18" cy="16" r="3"/>
+            </svg>
+            Generate EDM
+        </button>
+        
+        <div class="loading-container" id="loading">
+            <div class="loader"></div>
+        </div>
+        
+        <div id="status"></div>
+        <audio id="audioPlayer" controls>
+            Your browser does not support the audio element.
+        </audio>
+        <button id="downloadBtn">Download Audio</button>
+    </div>
+    <script src="constants.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>
