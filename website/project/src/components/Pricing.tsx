@@ -28,10 +28,10 @@ export default function Pricing() {
   ];
 
   return (
-    <div id="pricing" className="py-24 bg-white">
+    <div id="pricing" className="py-24 bg-gradient-to-b from-pink-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="lg:text-center">
-          <h2 className="text-base text-indigo-600 font-semibold tracking-wide uppercase">Pricing</h2>
+          <h2 className="text-base text-pink-500 font-semibold tracking-wide uppercase">Pricing</h2>
           <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
             Choose your plan
           </p>
@@ -44,23 +44,23 @@ export default function Pricing() {
           {tiers.map((tier) => (
             <div
               key={tier.name}
-              className="rounded-lg shadow-lg overflow-hidden bg-white transform hover:scale-105 transition-transform duration-200"
+              className="rounded-lg shadow-lg overflow-hidden bg-white transform hover:scale-105 transition-transform duration-200 border-2 hover:border-pink-200"
             >
               <div className="px-6 py-8">
-                <h3 className="text-2xl font-bold text-gray-900">{tier.name}</h3>
+                <h3 className="text-2xl font-bold text-pink-500">{tier.name}</h3>
                 <p className="mt-4">
-                  <span className="text-4xl font-extrabold">${tier.price}</span>
+                  <span className="text-4xl font-extrabold text-gray-900">${tier.price}</span>
                   <span className="text-base font-medium text-gray-500">/month</span>
                 </p>
                 <ul className="mt-6 space-y-4">
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500" />
+                      <Check className="h-5 w-5 text-pink-500" />
                       <span className="ml-3 text-gray-600">{feature}</span>
                     </li>
                   ))}
                 </ul>
-                <button className="mt-8 w-full bg-indigo-600 text-white py-3 px-6 rounded-md hover:bg-indigo-700 transition-colors">
+                <button className="mt-8 w-full bg-pink-500 text-white py-3 px-6 rounded-md hover:bg-pink-600 transition-colors">
                   {tier.name === 'Free' ? 'Get Started' : 'Upgrade Now'}
                 </button>
               </div>

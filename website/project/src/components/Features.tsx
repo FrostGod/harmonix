@@ -36,10 +36,10 @@ const features = [
 
 export default function Features() {
   return (
-    <div id="features" className="py-24 bg-white">
+    <div id="features" className="py-24 bg-gradient-to-b from-white to-pink-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="lg:text-center">
-          <h2 className="text-base text-indigo-600 font-semibold tracking-wide uppercase">Features</h2>
+          <h2 className="text-base text-pink-500 font-semibold tracking-wide uppercase">Features</h2>
           <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
             Everything you need for an enhanced browsing experience
           </p>
@@ -49,9 +49,9 @@ export default function Features() {
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature) => (
               <div key={feature.name} className="relative">
-                <div className="flex items-center space-x-4 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow">
+                <div className="flex items-center space-x-4 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow hover:border-pink-200 border-2">
                   <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-pink-500 text-white">
                       <feature.icon className="h-6 w-6" />
                     </div>
                   </div>

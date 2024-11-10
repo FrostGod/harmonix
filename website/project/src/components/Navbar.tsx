@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Menu, X, Music2 } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import { Logo } from '../assets/logo';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,15 +10,17 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Music2 className="h-8 w-8 text-indigo-600" />
-            <span className="ml-2 text-xl font-bold text-gray-900">Harmonix</span>
+            <a href="/" className="flex items-center gap-2">
+              <Logo />
+              <span className="text-xl font-bold text-pink-500">Harmonix</span>
+            </a>
           </div>
           
           <div className="hidden sm:flex sm:items-center sm:space-x-8">
-            <a href="#features" className="text-gray-600 hover:text-gray-900">Features</a>
-            <a href="#how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</a>
-            <a href="#pricing" className="text-gray-600 hover:text-gray-900">Pricing</a>
-            <button className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+            <a href="#features" className="text-gray-600 hover:text-pink-500">Features</a>
+            <a href="#how-it-works" className="text-gray-600 hover:text-pink-500">How it Works</a>
+            <a href="#pricing" className="text-gray-600 hover:text-pink-500">Pricing</a>
+            <button className="bg-pink-500 text-white px-4 py-2 rounded-md hover:bg-pink-600">
               Install Extension
             </button>
           </div>
@@ -32,10 +35,10 @@ export default function Navbar() {
         {isOpen && (
           <div className="sm:hidden pb-4">
             <div className="flex flex-col space-y-2">
-              <a href="#features" className="text-gray-600 hover:text-gray-900 px-3 py-2">Features</a>
-              <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 px-3 py-2">How it Works</a>
-              <a href="#pricing" className="text-gray-600 hover:text-gray-900 px-3 py-2">Pricing</a>
-              <button className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 mx-3">
+              <a href="#features" className="text-gray-600 hover:text-pink-500 px-3 py-2">Features</a>
+              <a href="#how-it-works" className="text-gray-600 hover:text-pink-500 px-3 py-2">How it Works</a>
+              <a href="#pricing" className="text-gray-600 hover:text-pink-500 px-3 py-2">Pricing</a>
+              <button className="bg-pink-500 text-white px-4 py-2 rounded-md hover:bg-pink-600 mx-3">
                 Install Extension
               </button>
             </div>
