@@ -1,48 +1,66 @@
-// Scrape text functionality
-document.getElementById('scrapeButton').addEventListener('click', async () => {
-    try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+document.addEventListener('DOMContentLoaded', function() {
+    // Load saved API keys
+    chrome.storage.sync.get(['openaiKey', 'musicKey'], function(result) {
+        document.getElementById('openaiKey').value = result.openaiKey || '';
+        document.getElementById('musicKey').value = result.musicKey || '';
+    });
+
+    // Save API keys
+    document.getElementById('saveKeys').addEventListener('click', function() {
+        const openaiKey = document.getElementById('openaiKey').value;
+        const musicKey = document.getElementById('musicKey').value;
         
-        if (!tab) {
-            console.error('No active tab found');
-            return;
-        }
-
-        const results = await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            function: scrapeText,
+        chrome.storage.sync.set({
+            openaiKey: openaiKey,
+            musicKey: musicKey
+        }, function() {
+            updateStatus('API keys saved!');
         });
+    });
 
-        const scrapedText = results[0].result;
+    // Generate Song button
+    document.getElementById('scrapeAndGenerate').addEventListener('click', function() {
+        updateStatus('Processing...');
         
-        const timestamp = new Date().toISOString().slice(0,10);
-        const filename = `scraped-${tab.title || 'page'}-${timestamp}.txt`;
-
-        chrome.downloads.download({
-            url: URL.createObjectURL(new Blob([scrapedText], {type: 'text/plain'})),
-            filename: filename,
-            saveAs: true
+        // Send message to content script to start scraping
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            chrome.tabs.sendMessage(tabs[0].id, {action: "scrape"}, function(response) {
+                if (response && response.text) {
+                    processScrapedText(response.text);
+                } else {
+                    updateStatus('Error: Could not scrape text');
+                }
+            });
         });
+    });
 
-    } catch (error) {
-        console.error('Error:', error);
-    }
+    // Generate Podcast button
+    document.getElementById('generatePodcast').addEventListener('click', function() {
+        updateStatus('Generating podcast...');
+        // Similar to song generation but for podcast
+        // Implement podcast generation logic here
+    });
 });
 
-// Music toggle functionality
-document.getElementById('toggleMusic').addEventListener('click', async () => {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab) {
-        chrome.tabs.sendMessage(tab.id, { action: "toggleMusic" });
-    }
-});
+function processScrapedText(text) {
+    // First, summarize with OpenAI
+    summarizeText(text)
+        .then(summary => generateMusic(summary))
+        .then(() => updateStatus('Song generated successfully!'))
+        .catch(error => updateStatus('Error: ' + error.message));
+}
 
-function scrapeText() {
-    try {
-        const text = document.body.innerText;
-        return text;
-    } catch (error) {
-        console.error('Scraping error:', error);
-        return '';
-    }
+async function summarizeText(text) {
+    const openaiKey = await chrome.storage.sync.get('openaiKey');
+    // Implement OpenAI API call here
+    // Return summary
+}
+
+async function generateMusic(summary) {
+    const musicKey = await chrome.storage.sync.get('musicKey');
+    // Implement music generation API call here
+}
+
+function updateStatus(message) {
+    document.getElementById('status').textContent = message;
 }
