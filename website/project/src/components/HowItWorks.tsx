@@ -20,7 +20,7 @@ export default function HowItWorks() {
     },
     {
       title: 'Save & Share',
-      description: 'Save your favorite generated tracks directly to Spotify.',
+      description: 'Save your favorite generated tracks directly to your wallet, or share with friends on social media.',
       icon: Share2,
     },
   ];

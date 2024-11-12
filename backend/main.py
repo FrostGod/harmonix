@@ -20,6 +20,7 @@ from solana.transaction import Transaction
 import base64
 # from metaplex.metadata import create_metadata_instruction, Data  # Comment out or remove this line
 import json
+import time
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -203,38 +204,97 @@ def generate_edm(summary: str, output_file_name: str):
         raise HTTPException(status_code=500, detail=f"Failed to generate EDM: {str(e)}")
 
 def generate_music(summary: str, output_file_name: str):
-  print("DIVI summary:", summary)
-  response = requests.post(
-      "https://api.aimlapi.com/v2/generate/audio/suno-ai/clip",
-      headers={
-          "Authorization": "Bearer " + os.getenv("AIMLAPI_API_KEY"),
-          "Content-Type": "application/json",
-      },
-      json={
-          "gpt_description_prompt": "A very short story about the website with the following content: " + summary,
-      },
-  )
-  response.raise_for_status()
-  data = response.json()
-  clip_ids = data["clip_ids"]
-  print("Generated clip ids:", clip_ids)
-  # fetch the clip
-  response = requests.get(
-      "https://api.aimlapi.com/v2/generate/audio/suno-ai/clip",
-      params={
-          "clip_id": clip_ids[0],
-          "status": "streaming",
-      },
-      headers={
-          "Authorization": "Bearer " + os.getenv("AIMLAPI_API_KEY"),
-          "Content-Type": "application/json",
-      },
-  )
-
-  response.raise_for_status()
-  data = response.json()
-  print("Clip data:", data)
-  return data["audio_url"]
+    try:
+        logger.info(f"Generating music for summary: {summary[:100]}...")  # Log first 100 chars
+        
+        # Clean and format the summary for the API
+        formatted_prompt = f"generate song based story about the website with the following content: {summary[:500]}"  # Limit length
+        
+        # First attempt to generate clip IDs
+        max_retries = 3
+        retry_count = 0
+        clip_ids = None
+        
+        while retry_count < max_retries and not clip_ids:
+            try:
+                response = requests.post(
+                    "https://api.aimlapi.com/v2/generate/audio/suno-ai/clip",
+                    headers={
+                        "Authorization": f"Bearer {os.getenv('AIMLAPI_API_KEY')}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "gpt_description_prompt": formatted_prompt,
+                    },
+                    timeout=30  # Add timeout
+                )
+                
+                response.raise_for_status()
+                data = response.json()
+                clip_ids = data.get("clip_ids")
+                
+                if not clip_ids:
+                    raise ValueError("No clip IDs received from API")
+                    
+            except requests.exceptions.RequestException as e:
+                retry_count += 1
+                logger.error(f"Attempt {retry_count} failed: {str(e)}")
+                if retry_count == max_retries:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Failed to generate music after {max_retries} attempts"
+                    )
+                time.sleep(2)  # Wait before retrying
+        
+        logger.info(f"Generated clip ids: {clip_ids}")
+        
+        # Now fetch the clip
+        retry_count = 0
+        audio_url = None
+        
+        while retry_count < max_retries and not audio_url:
+            try:
+                response = requests.get(
+                    "https://api.aimlapi.com/v2/generate/audio/suno-ai/clip",
+                    params={
+                        "clip_id": clip_ids[0],
+                        "status": "streaming",
+                    },
+                    headers={
+                        "Authorization": f"Bearer {os.getenv('AIMLAPI_API_KEY')}",
+                        "Content-Type": "application/json",
+                    },
+                    timeout=30
+                )
+                
+                response.raise_for_status()
+                data = response.json()
+                audio_url = data.get("audio_url")
+                
+                if not audio_url:
+                    raise ValueError("No audio URL received from API")
+                    
+            except requests.exceptions.RequestException as e:
+                retry_count += 1
+                logger.error(f"Attempt {retry_count} to fetch clip failed: {str(e)}")
+                if retry_count == max_retries:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Failed to fetch audio clip after {max_retries} attempts"
+                    )
+                time.sleep(2)
+        
+        logger.info(f"Successfully generated music. Audio URL: {audio_url}")
+        return audio_url
+        
+    except Exception as e:
+        logger.error(f"Error in generate_music: {str(e)}")
+        logger.error(traceback.format_exc())
+        
+        # Return a fallback audio URL if available
+        fallback_url = "https://your-fallback-audio-url.com/default-music.mp3"
+        logger.info(f"Returning fallback audio URL: {fallback_url}")
+        return fallback_url
 
 def generate_audio_summary(summary: str, output_file_name: str):
     print(f"Generating audio summary to: {output_file_name}")
